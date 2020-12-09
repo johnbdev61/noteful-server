@@ -3,6 +3,7 @@ const path = require('path')
 const express = require('express')
 const FoldersService = require('./folders-service')
 const xss = require('xss')
+const { endianness } = require('os')
 
 const foldersRouter = express.Router()
 
@@ -44,9 +45,31 @@ foldersRouter
 
     FoldersService.insertFolder(req.app.get('db'), newFolder)
       .then((folder) => {
-        res.status(201).location(`/folders/${folder.id}`).json(folder)
+        res.status(201).location(`/api/folders/${folder.id}`).json(folder)
       })
       .catch(next)
+  })
+
+foldersRouter
+  .route('/:folder_id')
+  .all((req, res, next) => {
+    FoldersService.getById(req.app.get('db'), req.params.folder_id)
+      .then((folder) => {
+        if (!folder) {
+          return res.status(404).json({
+            error: { message: `Folder doesn't exist` },
+          })
+        }
+        res.folder = folder
+        next()
+      })
+      .catch(next)
+  })
+  .get((req, res, next) => {
+    res.json({
+      id: res.folder.id,
+      title: res.folder.title,
+    })
   })
 
 module.exports = foldersRouter

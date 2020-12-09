@@ -4,6 +4,7 @@ const knex = require('knex')
 const app = require('../src/app')
 const { makeFoldersArray } = require('./folders.fixtures')
 
+
 describe('Folder Endpoints', function () {
   let db
 
@@ -25,7 +26,7 @@ describe('Folder Endpoints', function () {
     db.raw('TRUNCATE noteful_folders, noteful_notes RESTART IDENTITY CASCADE')
   )
 
-  describe.only(`GET /api/folders`, () => {
+  describe(`GET /api/folders`, () => {
     context('Given there are folders in the database', () => {
       const testFolders = makeFoldersArray()
 
@@ -41,6 +42,24 @@ describe('Folder Endpoints', function () {
     context(`Given no folders`, () => {
       it(`responds with 200 and an empty list`, () => {
         return supertest(app).get('/api/folders').expect(200, [])
+      })
+    })
+  })
+
+  describe(`GET /api/folders/:folder_id`, () => {
+    context('Given there are folders in the database', () => {
+      const testFolders = makeFoldersArray()
+
+      beforeEach('insert folders', () => {
+        return db.into('noteful_folders').insert(testFolders)
+      })
+
+      it('GET /api/folders/:folder_id repsponds with 200 and folder matching id', () => {
+        const idToGet = 2
+        const expectedFolder = { id: 2, title: 'Cats' }
+        return supertest(app)
+          .get(`/api/folders/${idToGet}`)
+          .expect(200, expectedFolder)
       })
     })
   })
